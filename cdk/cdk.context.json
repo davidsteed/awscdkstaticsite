@@ -1,0 +1,8 @@
+{
+  "@aws-cdk/core:enableStackNameDuplicates": "true",
+  "aws-cdk:enableDiffNoFail": "true",
+  "hosted-zone:account=491933654996:domainName=surecanpaydseu.com:region=us-east-1": {
+    "Id": "/hostedzone/Z14PND0QHT8L9J",
+    "Name": "surecanpaydseu.com."
+  }
+}

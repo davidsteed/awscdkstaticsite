@@ -1,0 +1,657 @@
+Resources:
+  RedirectSiteBucketD159B897:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: surecanpaydseu.com
+      WebsiteConfiguration:
+        RedirectAllRequestsTo:
+          HostName: wwwsurecanpaydseu.com
+          Protocol: https
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteBucket/Resource
+  RedirectSiteBucketPolicy650C1FCA:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: RedirectSiteBucketD159B897
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Principal: "*"
+            Resource:
+              Fn::Join:
+                - ""
+                - - Fn::GetAtt:
+                      - RedirectSiteBucketD159B897
+                      - Arn
+                  - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteBucket/Policy/Resource
+  RedirectSiteCertificateCertificateRequestorFunctionServiceRole9FC919B7:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteCertificate/CertificateRequestorFunction/ServiceRole/Resource
+  RedirectSiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy78B5C5C7:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - acm:RequestCertificate
+              - acm:DescribeCertificate
+              - acm:DeleteCertificate
+            Effect: Allow
+            Resource: "*"
+          - Action: route53:GetChange
+            Effect: Allow
+            Resource: "*"
+          - Action: route53:changeResourceRecordSets
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - :route53:::hostedzone/Z14PND0QHT8L9J
+        Version: "2012-10-17"
+      PolicyName: RedirectSiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy78B5C5C7
+      Roles:
+        - Ref: RedirectSiteCertificateCertificateRequestorFunctionServiceRole9FC919B7
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteCertificate/CertificateRequestorFunction/ServiceRole/DefaultPolicy/Resource
+  RedirectSiteCertificateCertificateRequestorFunctionA61166E7:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3Bucket0997A4A0
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3VersionKey83D9C166
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3VersionKey83D9C166
+      Handler: index.certificateRequestHandler
+      Role:
+        Fn::GetAtt:
+          - RedirectSiteCertificateCertificateRequestorFunctionServiceRole9FC919B7
+          - Arn
+      Runtime: nodejs10.x
+      Timeout: 900
+    DependsOn:
+      - RedirectSiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy78B5C5C7
+      - RedirectSiteCertificateCertificateRequestorFunctionServiceRole9FC919B7
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteCertificate/CertificateRequestorFunction/Resource
+      aws:asset:path: asset.0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0
+      aws:asset:property: Code
+  RedirectSiteCertificateCertificateRequestorResource34C14AC8:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - RedirectSiteCertificateCertificateRequestorFunctionA61166E7
+          - Arn
+      DomainName: surecanpaydseu.com
+      HostedZoneId: Z14PND0QHT8L9J
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteCertificate/CertificateRequestorResource/Default
+  RedirectSiteDistributionCFDistribution29EA95D7:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - surecanpaydseu.com
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            Cookies:
+              Forward: none
+            QueryString: false
+          TargetOriginId: origin1
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Origins:
+          - DomainName:
+              Fn::GetAtt:
+                - RedirectSiteBucketD159B897
+                - RegionalDomainName
+            Id: origin1
+            S3OriginConfig: {}
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::GetAtt:
+              - RedirectSiteCertificateCertificateRequestorResource34C14AC8
+              - Arn
+          MinimumProtocolVersion: TLSv1.1_2016
+          SslSupportMethod: sni-only
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteDistribution/CFDistribution
+  RedirectSiteAliasRecordBF4327F1:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: surecanpaydseu.com.
+      Type: A
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+            - RedirectSiteDistributionCFDistribution29EA95D7
+            - DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneId: Z14PND0QHT8L9J
+    Metadata:
+      aws:cdk:path: WebSite/Redirect/SiteAliasRecord/Resource
+  edgerole3C1DA700:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - edgelambda.amazonaws.com
+                - lambda.amazonaws.com
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: edgelambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: WebSite/edgerole/Resource
+  HeadersECA0794E:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: >-2
+          
+                      'use strict';
+                      exports.handler = (event, context, callback) => {
+                          const response = event.Records[0].cf.response;
+                          const headers = response.headers;
+              
+                          headers['strict-transport-security'] = [{
+                            key: 'Strict-Transport-Security',
+                            value: 'max-age=31536000; includeSubdomains; preload'
+                          }];
+              
+                          headers['content-security-policy'] = [{
+                            key: 'Content-Security-Policy',
+                            value: "default-src 'none'; font-src https://fonts.gstatic.com; img-src 'self' https://www.google-analytics.com https://www.gravatar.com; script-src 'self' https://www.google-analytics.com/analytics.js https://www.googletagmanager.com/gtag/js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/"
+                          }];
+              
+                          headers['x-content-type-options'] = [{
+                            key: 'X-Content-Type-Options',
+                            value: 'nosniff'
+                          }];
+              
+                          headers['x-frame-options'] = [{
+                            key: 'X-Frame-Options',
+                            value: 'DENY'
+                          }];
+              
+                          headers['x-xss-protection'] = [{
+                            key: 'X-XSS-Protection',
+                            value: '1; mode=block'
+                          }];
+              
+                          headers['referrer-policy'] = [{
+                            key: 'Referrer-Policy',
+                            value: 'same-origin'
+                          }];
+              
+                          callback(null, response);
+                      };
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - edgerole3C1DA700
+          - Arn
+      Runtime: nodejs10.x
+      MemorySize: 128
+    DependsOn:
+      - edgerole3C1DA700
+    Metadata:
+      aws:cdk:path: WebSite/Headers/Resource
+  LambdaInstanceB96958E1:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName:
+        Ref: HeadersECA0794E
+    Metadata:
+      aws:cdk:path: WebSite/LambdaInstance/Resource
+  SiteBucket397A1860:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: www.surecanpaydseu.com
+      WebsiteConfiguration:
+        ErrorDocument: index.html
+        IndexDocument: index.html
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: WebSite/SiteBucket/Resource
+  SiteBucketPolicy3AC1D0F8:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: SiteBucket397A1860
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Principal: "*"
+            Resource:
+              Fn::Join:
+                - ""
+                - - Fn::GetAtt:
+                      - SiteBucket397A1860
+                      - Arn
+                  - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: WebSite/SiteBucket/Policy/Resource
+  SiteCertificateCertificateRequestorFunctionServiceRole645E891D:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: WebSite/SiteCertificate/CertificateRequestorFunction/ServiceRole/Resource
+  SiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy96ED5C9C:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - acm:RequestCertificate
+              - acm:DescribeCertificate
+              - acm:DeleteCertificate
+            Effect: Allow
+            Resource: "*"
+          - Action: route53:GetChange
+            Effect: Allow
+            Resource: "*"
+          - Action: route53:changeResourceRecordSets
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - :route53:::hostedzone/Z14PND0QHT8L9J
+        Version: "2012-10-17"
+      PolicyName: SiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy96ED5C9C
+      Roles:
+        - Ref: SiteCertificateCertificateRequestorFunctionServiceRole645E891D
+    Metadata:
+      aws:cdk:path: WebSite/SiteCertificate/CertificateRequestorFunction/ServiceRole/DefaultPolicy/Resource
+  SiteCertificateCertificateRequestorFunction7CFA7DEA:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3Bucket0997A4A0
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3VersionKey83D9C166
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3VersionKey83D9C166
+      Handler: index.certificateRequestHandler
+      Role:
+        Fn::GetAtt:
+          - SiteCertificateCertificateRequestorFunctionServiceRole645E891D
+          - Arn
+      Runtime: nodejs10.x
+      Timeout: 900
+    DependsOn:
+      - SiteCertificateCertificateRequestorFunctionServiceRoleDefaultPolicy96ED5C9C
+      - SiteCertificateCertificateRequestorFunctionServiceRole645E891D
+    Metadata:
+      aws:cdk:path: WebSite/SiteCertificate/CertificateRequestorFunction/Resource
+      aws:asset:path: asset.0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0
+      aws:asset:property: Code
+  SiteCertificateCertificateRequestorResource6021082A:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - SiteCertificateCertificateRequestorFunction7CFA7DEA
+          - Arn
+      DomainName: www.surecanpaydseu.com
+      HostedZoneId: Z14PND0QHT8L9J
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: WebSite/SiteCertificate/CertificateRequestorResource/Default
+  SiteDistributionCFDistribution209CF7F5:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - www.surecanpaydseu.com
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 86400
+            ErrorCode: 403
+            ResponseCode: 403
+            ResponsePagePath: /index.html
+          - ErrorCachingMinTTL: 86400
+            ErrorCode: 404
+            ResponseCode: 403
+            ResponsePagePath: /index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            Cookies:
+              Forward: none
+            QueryString: false
+          LambdaFunctionAssociations:
+            - EventType: viewer-response
+              LambdaFunctionARN:
+                Ref: LambdaInstanceB96958E1
+          TargetOriginId: origin1
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Origins:
+          - DomainName:
+              Fn::GetAtt:
+                - SiteBucket397A1860
+                - RegionalDomainName
+            Id: origin1
+            S3OriginConfig: {}
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::GetAtt:
+              - SiteCertificateCertificateRequestorResource6021082A
+              - Arn
+          MinimumProtocolVersion: TLSv1.1_2016
+          SslSupportMethod: sni-only
+    Metadata:
+      aws:cdk:path: WebSite/SiteDistribution/CFDistribution
+  SiteAliasRecord3C0AF5BF:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: www.surecanpaydseu.com.
+      Type: A
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+            - SiteDistributionCFDistribution209CF7F5
+            - DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneId: Z14PND0QHT8L9J
+    Metadata:
+      aws:cdk:path: WebSite/SiteAliasRecord/Resource
+  DeployWithInvalidationCustomResourceE3FF7455:
+    Type: Custom::CDKBucketDeployment
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+          - Arn
+      SourceBucketNames:
+        - Ref: AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3Bucket2C7772FD
+      SourceObjectKeys:
+        - Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3VersionKeyFF13F9B0
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3VersionKeyFF13F9B0
+      DestinationBucketName:
+        Ref: SiteBucket397A1860
+      DistributionId:
+        Ref: SiteDistributionCFDistribution209CF7F5
+      DistributionPaths:
+        - /*
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: WebSite/DeployWithInvalidation/CustomResource/Default
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: WebSite/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":s3:::"
+                    - Ref: AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3Bucket2C7772FD
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":s3:::"
+                    - Ref: AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3Bucket2C7772FD
+                    - /*
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject*
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - SiteBucket397A1860
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - SiteBucket397A1860
+                        - Arn
+                    - /*
+          - Action:
+              - cloudfront:GetInvalidation
+              - cloudfront:CreateInvalidation
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      Roles:
+        - Ref: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: WebSite/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430S3Bucket13DFEC6A
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430S3VersionKeyED938FBC
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430S3VersionKeyED938FBC
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+          - Arn
+      Runtime: python3.6
+      Timeout: 900
+    DependsOn:
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: WebSite/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource
+      aws:asset:path: asset.bc48ee6c927f080e07592eed438ebb3fb6970273027a4582fe8a3e2ae7a3a499.zip
+      aws:asset:property: Code
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Modules: aws-cdk=1.21.1,@aws-cdk/assets=1.21.1,@aws-cdk/aws-certificatemanager=1.21.1,@aws-cdk/aws-cloudformation=1.21.1,@aws-cdk/aws-cloudfront=1.21.1,@aws-cdk/aws-cloudwatch=1.21.1,@aws-cdk/aws-ec2=1.21.1,@aws-cdk/aws-events=1.21.1,@aws-cdk/aws-iam=1.21.1,@aws-cdk/aws-kms=1.21.1,@aws-cdk/aws-lambda=1.21.1,@aws-cdk/aws-route53=1.21.1,@aws-cdk/aws-route53-targets=1.21.1,@aws-cdk/aws-s3=1.21.1,@aws-cdk/aws-s3-assets=1.21.1,@aws-cdk/aws-s3-deployment=1.21.1,@aws-cdk/aws-sqs=1.21.1,@aws-cdk/aws-ssm=1.21.1,@aws-cdk/core=1.21.1,@aws-cdk/cx-api=1.21.1,@aws-cdk/region-info=1.21.1,jsii-runtime=node.js/v13.3.0
+Outputs:
+  RedirectBucket4D5C4EB5:
+    Value:
+      Ref: RedirectSiteBucketD159B897
+  RedirectCertificateB9C30974:
+    Value:
+      Fn::GetAtt:
+        - RedirectSiteCertificateCertificateRequestorResource34C14AC8
+        - Arn
+  RedirectDistributionId8B1B32E8:
+    Value:
+      Ref: RedirectSiteDistributionCFDistribution29EA95D7
+  Site:
+    Value: https://www.surecanpaydseu.com
+  Bucket:
+    Value:
+      Ref: SiteBucket397A1860
+  Certificate:
+    Value:
+      Fn::GetAtt:
+        - SiteCertificateCertificateRequestorResource6021082A
+        - Arn
+  DistributionId:
+    Value:
+      Ref: SiteDistributionCFDistribution209CF7F5
+Parameters:
+  AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3Bucket0997A4A0:
+    Type: String
+    Description: S3 bucket for asset "0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0"
+  AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0S3VersionKey83D9C166:
+    Type: String
+    Description: S3 key for asset version "0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0"
+  AssetParameters0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0ArtifactHashF8F836D1:
+    Type: String
+    Description: Artifact hash for asset "0b9723d54b7db3fbfc1a143398b02392e5fe080a68535480782a949b4372d0f0"
+  AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430S3Bucket13DFEC6A:
+    Type: String
+    Description: S3 bucket for asset "6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430"
+  AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430S3VersionKeyED938FBC:
+    Type: String
+    Description: S3 key for asset version "6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430"
+  AssetParameters6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430ArtifactHash55E30580:
+    Type: String
+    Description: Artifact hash for asset "6416c21be320b522db64c705872c0a54d788e3df57b34a5f0d1e8602d7521430"
+  AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3Bucket2C7772FD:
+    Type: String
+    Description: S3 bucket for asset "b140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966"
+  AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966S3VersionKeyFF13F9B0:
+    Type: String
+    Description: S3 key for asset version "b140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966"
+  AssetParametersb140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966ArtifactHashA4478E40:
+    Type: String
+    Description: Artifact hash for asset "b140f059e92e983d4528e1f4635ef2802a233c6aca6f87ea442e4b06b0592966"
+
