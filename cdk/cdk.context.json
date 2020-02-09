@@ -4,5 +4,9 @@
   "hosted-zone:account=491933654996:domainName=surecanpaydseu.com:region=us-east-1": {
     "Id": "/hostedzone/Z14PND0QHT8L9J",
     "Name": "surecanpaydseu.com."
+  },
+  "hosted-zone:account=491933654996:domainName=testawsreact.com:region=us-east-1": {
+    "Id": "/hostedzone/ZJP01E7QBLR9Q",
+    "Name": "testawsreact.com."
   }
 }
