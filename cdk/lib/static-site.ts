@@ -52,6 +52,7 @@ export class StaticSite extends cdk.Stack {
             });
         }
 
+        // To apply security headers a lambda needs to be generated
 
         const codeStart = `'use strict';
         exports.handler = (event, context, callback) => {
@@ -79,6 +80,9 @@ export class StaticSite extends cdk.Stack {
             memorySize: 128,
         });
 
+
+        // the code must have a checksum to identify it otherwise it is not possible to update the code 
+        // when new headers are required
         const lversion = edgelambda.addVersion(checksum(code));
 
 

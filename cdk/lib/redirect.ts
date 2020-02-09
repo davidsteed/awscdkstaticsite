@@ -45,6 +45,7 @@ export class Redirect extends Construct {
                 sslMethod: cloudfront.SSLMethod.SNI,
                 securityPolicy: cloudfront.SecurityPolicyProtocol.TLS_V1_1_2016,
             },
+            // The following is require for react sites using routes so that routes are redirected to index.html
             errorConfigurations: [
                 {
                     errorCode: 403,
