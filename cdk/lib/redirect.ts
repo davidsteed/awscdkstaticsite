@@ -17,19 +17,6 @@ export class Redirect extends Construct {
         super(parent, name);
         const zone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: props.domainName });
 
-        // // Content bucket
-        // const siteBucket = new s3.Bucket(this, 'SiteBucket', {
-        //     bucketName: props.domainName,
-        //     publicReadAccess: true,
-        //     websiteRedirect: { hostName: props.redirectName, protocol: s3.RedirectProtocol.HTTPS },
-
-        //     // The default removal policy is RETAIN, which means that cdk destroy will not attempt to delete
-        //     // the new bucket, and it will remain in your account until manually deleted. By setting the policy to
-        //     // DESTROY, cdk destroy will attempt to delete the bucket, but will error if the bucket is not empty.
-        //     removalPolicy: cdk.RemovalPolicy.DESTROY, // NOT recommended for production code
-        // });
-        // new cdk.CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
-
         // TLS certificate
         const certificateArn = new acm.DnsValidatedCertificate(this, 'SiteCertificate', {
             domainName: props.domainName,

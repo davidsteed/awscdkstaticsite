@@ -43,8 +43,6 @@ export class StaticSite extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: StaticSiteProps) {
         super(scope, id, props);
 
-
-
         // To apply security headers a lambda needs to be generated
 
         const codeStart = `'use strict';
