@@ -42,6 +42,9 @@ function checksum(s: string): string {
 export class StaticSite extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: StaticSiteProps) {
         super(scope, id, props);
+
+
+
         // To apply security headers a lambda needs to be generated
 
         const codeStart = `'use strict';
@@ -80,27 +83,31 @@ export class StaticSite extends cdk.Stack {
         const siteDomain = props.siteSubDomain + '.' + props.domainName;
         new cdk.CfnOutput(this, 'Site', { value: 'https://' + siteDomain });
 
-        //if siteSubDomain is www redirect from from domain to site subdomain
-        let certDomain=siteDomain
-        let names=[siteDomain]
-        if (props.siteSubDomain === 'www') {
-            certDomain='*.'+props.domainName
-            names=[siteDomain,props.domainName]
-        }
-
         // Content bucket
         const siteBucket = new s3.Bucket(this, 'SiteBucket', {
             bucketName: siteDomain,
             websiteIndexDocument: 'index.html',
             websiteErrorDocument: 'index.html',
             publicReadAccess: true,
-            removalPolicy: cdk.RemovalPolicy.RETAIN, 
+
+            // The default removal policy is RETAIN, which means that cdk destroy will not attempt to delete
+            // the new bucket, and it will remain in your account until manually deleted. By setting the policy to
+            // DESTROY, cdk destroy will attempt to delete the bucket, but will error if the bucket is not empty.
+            removalPolicy: cdk.RemovalPolicy.DESTROY, // NOT recommended for production code
         });
         new cdk.CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
 
+        //if siteSubDomain is www redirect from from domain to site subdomain
+
+        if (props.siteSubDomain === 'www') {
+            new Redirect(this, 'Redirect', {
+                domainName: props.domainName,
+                siteBucket: siteBucket
+            });
+        }
         // TLS certificate
         const certificateArn = new acm.DnsValidatedCertificate(this, 'SiteCertificate', {
-            domainName: certDomain,
+            domainName: siteDomain,
             hostedZone: zone
         }).certificateArn;
         new cdk.CfnOutput(this, 'Certificate', { value: certificateArn });
@@ -109,7 +116,7 @@ export class StaticSite extends cdk.Stack {
         const distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
             aliasConfiguration: {
                 acmCertRef: certificateArn,
-                names: names,
+                names: [siteDomain],
                 sslMethod: cloudfront.SSLMethod.SNI,
                 securityPolicy: cloudfront.SecurityPolicyProtocol.TLS_V1_1_2016,
             },
@@ -154,14 +161,6 @@ export class StaticSite extends cdk.Stack {
             target: route53.AddressRecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
             zone
         });
-
-        if (props.siteSubDomain === 'www') {
-            new route53.ARecord(this, 'DomainAliasRecord', {
-                recordName: props.domainName,
-                target: route53.AddressRecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
-                zone
-            });
-        }
 
         // Deploy site contents to S3 bucket
         new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {

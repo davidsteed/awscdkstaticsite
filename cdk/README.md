@@ -1,14 +1,11 @@
-# Welcome to your CDK TypeScript project!
+# AWS React Site Deployment with Security Headers
 
-This is a blank project for TypeScript development with CDK.
+Before you deploy this stack either create a blank site from the root directory
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+```
+npx create-react-app react-site
+cd react-site
+npm run build
+```
 
-## Useful commands
-
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+or change the assets: tag in bin/cdk.ts to point a built site you want to deploy
