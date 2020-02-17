@@ -4,7 +4,8 @@ import s3deploy = require('@aws-cdk/aws-s3-deployment');
 import cdk = require('@aws-cdk/core');
 import lambda = require('@aws-cdk/aws-lambda');
 import { DeploySite } from './deploy-site';
-import route53patterns =require('@aws-cdk/aws-route53-patterns');
+import route53patterns = require('@aws-cdk/aws-route53-patterns');
+import route53 = require('@aws-cdk/aws-route53');
 
 export interface StaticSiteProps extends cdk.StackProps {
     domainName: string;
@@ -89,11 +90,9 @@ export class StaticSite extends cdk.Stack {
         if (props.siteSubDomain === 'www') {
             new route53patterns.HttpsRedirect(this, 'Redirect', {
                 recordNames: [props.domainName],
-                targetDomain: siteD,
-                zone: ,
-                zoneName: 'example.com',
-                })
-              });
+                targetDomain: siteDomain,
+                zone: route53.HostedZone.fromLookup(this, 'Zone', { domainName: props.domainName }),
+            })
         }
 
         const website = new DeploySite(this, 'Website', {
