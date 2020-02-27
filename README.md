@@ -14,7 +14,7 @@ cd react-site
 npm run build
 ```
 
-To deploy the site you need to have a domain registered in route53. You can either register one (\$12) or transfer an existing registered domain to route53 from another provider.
+To deploy the site you need to have a domain registered in route53. You can either register one (\$12) or transfer an existing registered domain to route53 from another provider. If you transfer a domain you will need to create a hosted zone in Route53 before running this script.
 
 These scripts use the AWS CDK framework. Instructions for installing this can be found at https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html. Use version 1.22.0 or higher.
 
