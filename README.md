@@ -51,3 +51,8 @@ cdk deploy  -c account=<your AWS account number> -c domainName=<your domain name
 You will be prompted to accept the changes (if you want to remove this you can use the option --require-approval never). The site will be deployed. To deploy updates - just repeat.
 
 These scripts are distributed under an MIT licence. If you do find any problems please provide feedback by raising an issue.
+
+## Known issues
+
+The first time this script is run it can fail as the ACM certificate manager can take quite a long time (several hours) to validate a certificate. If this happens the script will time out. You can go to the certificate manager console and check when the certificate request
+has been completed and run the script again when it has. This is only a problem with the first deployment.
