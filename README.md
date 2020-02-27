@@ -4,7 +4,7 @@ Deploying a react web site to AWS cloudfront with TLS, the correct security head
 
 This project provides scripts to enable this to be done using a single command that can be incorporated into a CI/CD pipeline.
 
-Custom security headers can be specified in the file cdk/bin/cdk.ts. The example given allows inline scripts to be run. You can create a react web site without an inline script you can set You can set INLINE_RUNTIME_CHUNK environment variable to false or you could add the script to the headder - For more information see https://medium.com/@nrshahri/csp-cra-324dd83fe5ff
+Custom security headers can be specified in the file cdk/bin/cdk.ts. The example given allows inline scripts to be run. You can create a react web site without an inline script you can set You can set INLINE_RUNTIME_CHUNK environment variable to false or you could add the script to the header - For more information see https://medium.com/@nrshahri/csp-cra-324dd83fe5ff
 
 To test the scripts you can generate a react website using the following commands run from the project root directory
 
