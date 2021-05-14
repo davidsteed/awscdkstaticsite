@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import s3 = require('@aws-cdk/aws-s3');
-import s3deploy = require('@aws-cdk/aws-s3-deployment');
-import cdk = require('@aws-cdk/core');
-import lambda = require('@aws-cdk/aws-lambda');
+import cdk = require("aws-cdk-lib");
+import { Construct } from "constructs";
+import {aws_route53 as route53}from "aws-cdk-lib";
+import {aws_s3 as s3}from "aws-cdk-lib";
+import {aws_lambda as lambda}from "aws-cdk-lib";
+import { aws_s3_deployment as s3deploy } from "aws-cdk-lib";
 import { DeploySite } from './deploy-site';
-import route53patterns = require('@aws-cdk/aws-route53-patterns');
-import route53 = require('@aws-cdk/aws-route53');
+import {aws_route53_patterns as route53patterns}from "aws-cdk-lib";
 
 export interface StaticSiteProps extends cdk.StackProps {
     domainName: string;
@@ -38,7 +39,7 @@ function checksum(s: string): string {
 
 
 export class StaticSite extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props: StaticSiteProps) {
+    constructor(scope: Construct, id: string, props: StaticSiteProps) {
         super(scope, id, props);
 
         // To apply security headers a lambda needs to be generated
@@ -72,7 +73,7 @@ export class StaticSite extends cdk.Stack {
 
         // the code must have a checksum to identify it otherwise it is not possible to update the code 
         // when new headers are required
-        const lversion = edgelambda.addVersion(checksum(code));
+        const lversion = edgelambda.currentVersion;
 
         const siteDomain = props.siteSubDomain + '.' + props.domainName;
         new cdk.CfnOutput(this, 'Site', { value: 'https://' + siteDomain });

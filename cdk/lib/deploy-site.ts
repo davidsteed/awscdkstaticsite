@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import cloudfront = require('@aws-cdk/aws-cloudfront');
-import route53 = require('@aws-cdk/aws-route53');
-import s3 = require('@aws-cdk/aws-s3');
-import acm = require('@aws-cdk/aws-certificatemanager');
-import cdk = require('@aws-cdk/core');
-import targets = require('@aws-cdk/aws-route53-targets/lib');
-import { Construct } from '@aws-cdk/core';
-import lambda = require('@aws-cdk/aws-lambda');
+import cdk = require("aws-cdk-lib");
+import { Construct } from "constructs";
+import {aws_cloudfront as cloudfront}from "aws-cdk-lib";
+import {aws_route53 as route53}from "aws-cdk-lib";
+import {aws_s3 as s3}from "aws-cdk-lib";
+import {aws_certificatemanager as acm}from "aws-cdk-lib";
+import {aws_route53_targets as targets}from "aws-cdk-lib";
+import {aws_lambda as lambda}from "aws-cdk-lib";
 
 export interface DeploySiteProps {
     domainName: string;
@@ -32,12 +32,15 @@ export class DeploySite extends Construct {
 
         // CloudFront distribution that provides HTTPS
         this.distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
-            aliasConfiguration: {
-                acmCertRef: certificateArn,
-                names: [props.siteName],
-                sslMethod: cloudfront.SSLMethod.SNI,
-                securityPolicy: cloudfront.SecurityPolicyProtocol.TLS_V1_1_2016,
-            },
+            viewerCertificate: {
+                aliases: [props.siteName],
+                props: {
+                  acmCertificateArn: certificateArn,
+                  sslSupportMethod: cloudfront.SSLMethod.SNI,
+                  minimumProtocolVersion:cloudfront.SecurityPolicyProtocol.TLS_V1_2_2019,
+                },
+              },
+            
             errorConfigurations: [
                 {
                     errorCode: 403,
@@ -76,7 +79,7 @@ export class DeploySite extends Construct {
         // Route53 alias record for the CloudFront distribution
         new route53.ARecord(this, 'SiteAliasRecord', {
             recordName: props.siteName,
-            target: route53.AddressRecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+            target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
             zone
         });
 

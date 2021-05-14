@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
+import cdk = require("aws-cdk-lib");
+import "source-map-support/register";
 import { StaticSite } from '../lib/static-site';
 
 

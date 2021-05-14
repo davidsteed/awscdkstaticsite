@@ -1,5 +1,4 @@
-import { expect as expectCDK, matchTemplate, MatchStyle } from '@aws-cdk/assert';
-import * as cdk from '@aws-cdk/core';
+import cdk = require("aws-cdk-lib");
 import { StaticSite } from '../lib/static-site';
 
 test('Empty Stack', () => {
