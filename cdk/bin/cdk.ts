@@ -35,7 +35,7 @@ const headers = [
   },
   {
     key: "Content-Security-Policy",
-    value: "script-src 'self' 'unsafe-inline';",
+    value: "script-src 'self';",
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
