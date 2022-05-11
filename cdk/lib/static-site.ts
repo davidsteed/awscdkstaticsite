@@ -66,7 +66,7 @@ export class StaticSite extends cdk.Stack {
         const edgelambda = new lambda.Function(this, 'Headers', {
             code: lambda.Code.fromInline(code),
             handler: 'index.handler',
-            runtime: lambda.Runtime.NODEJS_10_X,
+            runtime: lambda.Runtime.NODEJS_14_X,
             memorySize: 128,
         });
 
