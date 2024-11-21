@@ -16,5 +16,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: Install dependencies
+        run: make install
+      - name: Build
         run: make build
       - run: echo "🍏 This job's status is ${{ job.status }}."

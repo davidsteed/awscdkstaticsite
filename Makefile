@@ -23,12 +23,18 @@ aws-version-check:
 .PHONY: clean
 clean:
 	rm -rf ./react-site/build
-# As well as building the lambda build creates a version of the openapi file for deployment with the run
-# time parameters needed for authorising using cognito pools
+	rm -rf ./react-site/node_modules
+	rm -rf ./cdk/node_modules
+
+.PHONY: install
+install:
+	cd react-site && yarn && cd ..
+	cd cdk && yarn  && cd ..
+
 .PHONY: build
 build:
-	cd react-site ; yarn build ;cd ..
-	cd cdk ; yarn build ;cd ..
+	cd react-site && yarn build && cd ..
+	cd cdk && yarn build && cd ..
 
 .PHONY: lint
 lint:
