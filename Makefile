@@ -28,8 +28,8 @@ clean:
 .PHONY: build
 build:
 	cd react-site ; yarn build ;cd ..
+	cd cdk ; yarn build ;cd ..
 
 .PHONY: lint
 lint:
 	golangci-lint run ./... --fix
-
