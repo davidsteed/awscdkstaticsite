@@ -55,6 +55,6 @@ new StaticSite(app, "WebSite", {
   },
   domainName: domainName,
   siteSubDomain: subDomain,
-  assets: "../react-site/build",
+  assets: "../react-site/dist",
   headers: headers,
 });
